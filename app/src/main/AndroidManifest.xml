@@ -7,9 +7,17 @@
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
     <!-- Android 12+: lets updates of apps we installed go through without a dialog. -->
     <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- Catalog apps. Apps added by the user become visible once App Hub installs them. -->
+    <queries>
+        <package android:name="com.hafij.astraplayer" />
+        <package android:name="io.github.hafijbge.docscan" />
+        <package android:name="com.hafij.screenlingo" />
+        <package android:name="io.github.hafijbge.markd.debug" />
+        <package android:name="io.github.hafijbge.worksuite" />
+    </queries>
 
     <application
         android:allowBackup="false"

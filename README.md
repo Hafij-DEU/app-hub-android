@@ -35,7 +35,7 @@ No code setting turns that off; see "Play Protect" below.
 - Picks the APK for the device ABI (arm64-v8a, armeabi-v7a, x86_64, x86), else a universal APK.
 - Verifies downloads against the release's `SHA256SUMS` when one is published.
 - Background check every 6 hours with a notification. Optional silent auto-install on Wi-Fi.
-- Add any other GitHub repo with APK releases (menu ▸ Add app).
+- Add any other GitHub repo with APK releases (menu ▸ Add app). New catalog apps also need a `<queries>` entry in the manifest, or App Hub only sees them after installing them itself.
 - The app list also loads from `catalog.json` in this repo, so new apps show up without an App Hub release.
 - ETag caching, so checks rarely count against GitHub's 60/hour limit. An optional token lifts it.
 
