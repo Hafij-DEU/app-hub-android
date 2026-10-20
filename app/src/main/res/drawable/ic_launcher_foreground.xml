@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Four app tiles, the last one carrying a download arrow. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M36,34h12a2,2 0,0 1,2 2v12a2,2 0,0 1,-2 2h-12a2,2 0,0 1,-2 -2v-12a2,2 0,0 1,2 -2z" />
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M60,34h12a2,2 0,0 1,2 2v12a2,2 0,0 1,-2 2h-12a2,2 0,0 1,-2 -2v-12a2,2 0,0 1,2 -2z" />
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M36,58h12a2,2 0,0 1,2 2v12a2,2 0,0 1,-2 2h-12a2,2 0,0 1,-2 -2v-12a2,2 0,0 1,2 -2z" />
+    <path android:fillColor="#FFD54F"
+        android:pathData="M60,58h12a2,2 0,0 1,2 2v12a2,2 0,0 1,-2 2h-12a2,2 0,0 1,-2 -2v-12a2,2 0,0 1,2 -2z" />
+    <path android:fillColor="#2F4FB8"
+        android:pathData="M64.5,60.5h3v6.5h3.5l-5,5.5l-5,-5.5h3.5z" />
+</vector>

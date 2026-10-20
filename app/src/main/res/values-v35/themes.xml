@@ -1,0 +1,9 @@
+<resources>
+    <style name="AppTheme" parent="@android:style/Theme.Material.Light.DarkActionBar">
+        <item name="android:colorPrimary">#3D63DD</item>
+        <item name="android:colorPrimaryDark">#2F4FB8</item>
+        <item name="android:colorAccent">#3D63DD</item>
+        <item name="android:windowBackground">#F4F5F8</item>
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
+    </style>
+</resources>

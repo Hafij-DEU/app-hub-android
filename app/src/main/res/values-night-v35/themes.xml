@@ -1,0 +1,9 @@
+<resources>
+    <style name="AppTheme" parent="@android:style/Theme.Material">
+        <item name="android:colorPrimary">#1D2027</item>
+        <item name="android:colorPrimaryDark">#111318</item>
+        <item name="android:colorAccent">#8AA8FF</item>
+        <item name="android:windowBackground">#111318</item>
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
+    </style>
+</resources>
