@@ -17,6 +17,7 @@
         <package android:name="com.hafij.screenlingo" />
         <package android:name="io.github.hafijbge.markd.debug" />
         <package android:name="io.github.hafijbge.worksuite" />
+        <package android:name="io.github.hafijbge.extendo" />
     </queries>
 
     <application

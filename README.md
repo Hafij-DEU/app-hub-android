@@ -9,6 +9,7 @@ It is the Android companion of [App Hub](https://github.com/Hafij-DEU/Applicatio
 | DocScan | Hafij-DEU/Scan |
 | ScreenLingo | Hafij-DEU/live-translate |
 | Markd | Hafij-BGE/markd |
+| Extendo | Hafij-BGE/Second-monitor |
 | WorkSuite | Hafij-BGE/work-suite (pre-releases) |
 | App Hub itself | Hafij-DEU/app-hub-android |
 

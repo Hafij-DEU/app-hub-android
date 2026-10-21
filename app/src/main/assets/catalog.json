@@ -5,6 +5,7 @@
     { "id": "docscan", "name": "DocScan", "repo": "Hafij-DEU/Scan", "package": "io.github.hafijbge.docscan", "icon": "icon_docscan" },
     { "id": "screenlingo", "name": "ScreenLingo", "repo": "Hafij-DEU/live-translate", "package": "com.hafij.screenlingo" },
     { "id": "markd", "name": "Markd", "repo": "Hafij-BGE/markd", "package": "io.github.hafijbge.markd.debug", "icon": "icon_markd" },
+    { "id": "extendo", "name": "Extendo", "repo": "Hafij-BGE/Second-monitor", "package": "io.github.hafijbge.extendo", "icon": "icon_extendo" },
     { "id": "worksuite", "name": "WorkSuite", "repo": "Hafij-BGE/work-suite", "package": "io.github.hafijbge.worksuite", "prerelease": true }
   ]
 }
