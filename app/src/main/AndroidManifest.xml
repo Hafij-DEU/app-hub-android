@@ -18,6 +18,7 @@
         <package android:name="io.github.hafijbge.markd.debug" />
         <package android:name="io.github.hafijbge.worksuite" />
         <package android:name="io.github.hafijbge.extendo" />
+        <package android:name="io.github.hafijbge.meshdrop" />
     </queries>
 
     <application
