@@ -126,7 +126,16 @@ final class InstallQueue {
                 e.pkg = info.packageName;
                 if (e.custom) Catalog.saveCustom(c, Catalog.loadWith(c, e));
             }
-            err = install(c, e, apk);
+            boolean silent = !Settings.prefs(c).getBoolean(SILENT_DENIED, false);
+            err = install(c, e, apk, silent);
+            if (silent && err != null && err.startsWith(DENIED)) {
+                // Some ROMs (HyperOS/MIUI) refuse a session that asks to skip the confirmation:
+                // ask the normal way, and from now on on this device.
+                Settings.prefs(c).edit().putBoolean(SILENT_DENIED, true).apply();
+                s.text = "Installing…";
+                changed();
+                err = install(c, e, apk, false);
+            }
         } catch (IOException ex) {
             err = ex.getMessage() == null ? ex.toString() : ex.getMessage();
         } finally {
@@ -208,17 +217,25 @@ final class InstallQueue {
         }
     }
 
-    private static String install(Context c, AppEntry e, File apk) throws IOException {
+    /** Prefs key: this device refused silent sessions once; updates ask for confirmation. */
+    static final String SILENT_DENIED = "silent_denied";
+    /** Start of the error InstallReceiver reports when the system refused the session itself. */
+    static final String DENIED = "Permission denied";
+
+    /** `silent`: ask the system to skip the confirmation (Android 12+, App Hub the installer of record). */
+    private static String install(Context c, AppEntry e, File apk, boolean silent) throws IOException {
         PackageInstaller pi = c.getPackageManager().getPackageInstaller();
         PackageInstaller.SessionParams params =
                 new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
         params.setAppPackageName(e.pkg);
         params.setSize(apk.length());
         params.setInstallReason(android.content.pm.PackageManager.INSTALL_REASON_USER);
-        if (Build.VERSION.SDK_INT >= 31) {
+        if (silent && Build.VERSION.SDK_INT >= 31) {
             params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED);
+        } else if (Build.VERSION.SDK_INT >= 31) {
+            params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_REQUIRED);
         }
-        if (Build.VERSION.SDK_INT >= 33) {
+        if (silent && Build.VERSION.SDK_INT >= 33) {
             params.setPackageSource(PackageInstaller.PACKAGE_SOURCE_STORE);
         }
         int id = pi.createSession(params);

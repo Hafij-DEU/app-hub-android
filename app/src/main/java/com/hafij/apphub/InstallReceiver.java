@@ -50,6 +50,8 @@ public final class InstallReceiver extends BroadcastReceiver {
     private static String describe(int status, String msg) {
         switch (status) {
             case PackageInstaller.STATUS_FAILURE_ABORTED:
+                // The system itself refusing the session (not the user pressing Cancel).
+                if (msg != null && msg.contains("Permission denied")) return InstallQueue.DENIED + " by the system";
                 return "Install cancelled";
             case PackageInstaller.STATUS_FAILURE_BLOCKED:
                 return "Install blocked by the system";
