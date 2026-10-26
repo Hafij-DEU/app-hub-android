@@ -72,3 +72,8 @@ source ~/.android/apphub-release.env
 
 The release key lives outside the repo. Every App Hub release must use the same key,
 or installed copies cannot update themselves.
+
+## License
+
+MIT, see [LICENSE](LICENSE). App Hub has no third-party libraries. Developed by Md. Hafijur Rahman.
+This app was generated with AI; developer support may not be available.

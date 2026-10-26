@@ -15,6 +15,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
 import android.text.format.DateUtils;
+import android.text.util.Linkify;
 import android.text.format.Formatter;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -41,7 +42,7 @@ public final class MainActivity extends Activity implements InstallQueue.Listene
     /** True while the activity is started; install confirmations open directly then. */
     static volatile boolean visible;
 
-    private static final int MENU_REFRESH = 1, MENU_ADD = 2, MENU_SETTINGS = 3;
+    private static final int MENU_REFRESH = 1, MENU_ADD = 2, MENU_SETTINGS = 3, MENU_ABOUT = 4;
 
     private final ExecutorService bg = Executors.newSingleThreadExecutor();
     private List<AppEntry> apps = new ArrayList<>();
@@ -446,6 +447,7 @@ public final class MainActivity extends Activity implements InstallQueue.Listene
         menu.add(0, MENU_REFRESH, 0, "Check now").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
         menu.add(0, MENU_ADD, 1, "Add app");
         menu.add(0, MENU_SETTINGS, 2, "Settings");
+        menu.add(0, MENU_ABOUT, 3, "About");
         return true;
     }
 
@@ -461,9 +463,28 @@ public final class MainActivity extends Activity implements InstallQueue.Listene
             case MENU_SETTINGS:
                 settings();
                 return true;
+            case MENU_ABOUT:
+                about();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    private void about() {
+        TextView body = text("Developed by Md. Hafijur Rahman\n\n"
+                + "GitHub: https://github.com/Hafij-DEU/app-hub-android\n"
+                + "License: MIT (see LICENSE in the repository)\n\n"
+                + "Open-source licenses: App Hub uses only the Android platform; it bundles no third-party libraries.\n\n"
+                + "This app was generated with AI. Developer support may not be available.", 14, cText);
+        body.setAutoLinkMask(Linkify.WEB_URLS);
+        body.setText(body.getText());
+        body.setPadding(dp(24), dp(12), dp(24), 0);
+        new AlertDialog.Builder(this)
+                .setTitle("App Hub " + BuildConfig.VERSION_NAME)
+                .setView(body)
+                .setPositiveButton("OK", null)
+                .show();
     }
 
     // ---- view helpers -----------------------------------------------------------------------
