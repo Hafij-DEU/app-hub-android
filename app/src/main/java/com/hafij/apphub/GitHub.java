@@ -86,10 +86,20 @@ final class GitHub {
             if (api) {
                 con.setRequestProperty("Accept", "application/vnd.github+json");
                 String token = Settings.token(c);
-                if (!token.isEmpty()) con.setRequestProperty("Authorization", "Bearer " + token);
+                if (!token.isEmpty() && headerSafe(token)) {
+                    con.setRequestProperty("Authorization", "Bearer " + token);
+                }
             }
             if (body.exists() && etag.exists()) {
-                con.setRequestProperty("If-None-Match", read(etag));
+                // A cut-off write can leave a cache file full of zero bytes; such a header
+                // value makes HttpURLConnection throw, so drop the damaged pair and ask afresh.
+                String tag = read(etag).trim();
+                if (headerSafe(tag) && read(body).indexOf('\0') < 0) {
+                    con.setRequestProperty("If-None-Match", tag);
+                } else {
+                    etag.delete();
+                    body.delete();
+                }
             }
             int code = con.getResponseCode();
             if (code == 304) return new Response(read(body), null);
@@ -214,9 +224,26 @@ final class GitHub {
         return new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8);
     }
 
+    /** Writes to a temporary file first, so a cut-off write never leaves a damaged file. */
     static void write(File f, String text) throws IOException {
-        try (FileOutputStream out = new FileOutputStream(f)) {
+        File tmp = new File(f.getPath() + ".tmp");
+        try (FileOutputStream out = new FileOutputStream(tmp)) {
             out.write(text.getBytes(StandardCharsets.UTF_8));
+            out.getFD().sync();
         }
+        if (!tmp.renameTo(f)) {
+            tmp.delete();
+            throw new IOException("Could not save " + f.getName());
+        }
+    }
+
+    /** True when HTTP allows the text as a header value: printable ASCII only. */
+    static boolean headerSafe(String v) {
+        if (v.isEmpty()) return false;
+        for (int i = 0; i < v.length(); i++) {
+            char ch = v.charAt(i);
+            if (ch < 0x20 || ch > 0x7e) return false;
+        }
+        return true;
     }
 }

@@ -43,6 +43,9 @@ final class Updates {
             e.error = ex.getMessage();
         } catch (JSONException ex) {
             e.error = "Bad answer from GitHub";
+        } catch (RuntimeException ex) {
+            // One app's bad answer must not stop App Hub or the other checks.
+            e.error = "Check failed: " + ex.getMessage();
         }
     }
 
