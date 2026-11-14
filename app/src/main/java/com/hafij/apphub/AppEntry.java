@@ -21,7 +21,8 @@ final class AppEntry {
     Asset sums;
     String installedVersion;
     String error;
-    boolean stale;
+    /** Set when the release info is a cached answer; says why (offline, rate limit). */
+    String staleNote;
 
     boolean installed() {
         return installedVersion != null;

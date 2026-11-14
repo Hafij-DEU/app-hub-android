@@ -32,9 +32,11 @@ final class Updates {
     static void check(Context c, AppEntry e) {
         refreshInstalled(c, e);
         e.error = null;
+        e.staleNote = null;
         try {
-            GitHub.Response r = GitHub.releases(c, e.repo);
-            e.stale = r.stale;
+            boolean pre = e.prerelease || Settings.includePrerelease(c);
+            GitHub.Response r = GitHub.releases(c, e.repo, pre);
+            e.staleNote = r.staleNote;
             pick(c, e, new JSONArray(r.body));
             if (e.release == null) e.error = "No release with an APK yet";
         } catch (IOException ex) {

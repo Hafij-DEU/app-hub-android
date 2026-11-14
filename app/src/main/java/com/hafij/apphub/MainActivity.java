@@ -219,7 +219,7 @@ public final class MainActivity extends Activity implements InstallQueue.Listene
             sub = text(latest != null ? "Not installed · " + latest : "Not installed", 13, cSub);
         }
         texts.addView(sub);
-        if (e.stale && st == null) texts.addView(text("Offline: showing last known release", 11, cSub));
+        if (e.staleNote != null && st == null) texts.addView(text(e.staleNote, 11, cSub));
         row.addView(texts, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
 
         Button action = actionButton(e, st);
@@ -414,32 +414,69 @@ public final class MainActivity extends Activity implements InstallQueue.Listene
         CheckBox pre = new CheckBox(this);
         pre.setText("Include pre-releases for every app");
         pre.setChecked(Settings.includePrerelease(this));
+        String saved = Settings.token(this);
+        TextView tokenHead = text("GitHub token", 14, cText, true);
+        tokenHead.setPadding(0, dp(14), 0, 0);
         EditText token = new EditText(this);
-        token.setHint("GitHub token (optional)");
+        token.setHint("Paste a token (optional)");
         token.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        token.setText(Settings.token(this));
-        TextView note = text("A token only raises GitHub's limit of 60 checks per hour. "
-                + "A fine-grained token with no permissions is enough.", 12, cSub);
+        // A password field defaults to monospace; keep the hint in the dialog's font.
+        token.setTypeface(Typeface.DEFAULT);
+        token.setText(saved);
+        TextView note = text((saved.isEmpty()
+                ? "No token: every device on your network shares GitHub's limit of 60 checks per hour. "
+                : "Token saved. ")
+                + "A token raises the limit to 5,000 per hour. A fine-grained token with no "
+                + "permissions is enough. Empty the box to remove it.", 12, cSub);
+        Button create = button("Create a token on GitHub", false);
+        create.setOnClickListener(v -> startActivity(new Intent(Intent.ACTION_VIEW,
+                Uri.parse("https://github.com/settings/personal-access-tokens/new"))));
         TextView ver = text("App Hub " + BuildConfig.VERSION_NAME, 12, cSub);
         ver.setPadding(0, dp(12), 0, 0);
         box.addView(auto);
         box.addView(pre);
+        box.addView(tokenHead);
         box.addView(token);
         box.addView(note);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, dp(40));
+        lp.topMargin = dp(8);
+        box.addView(create, lp);
         box.addView(ver);
         new AlertDialog.Builder(this)
                 .setTitle("Settings")
                 .setView(box)
                 .setPositiveButton("Save", (d, w) -> {
+                    String t = token.getText().toString().trim();
                     Settings.prefs(this).edit()
                             .putBoolean("auto_install", auto.isChecked())
                             .putBoolean("prerelease", pre.isChecked())
-                            .putString("token", token.getText().toString().trim())
+                            .putString("token", t)
                             .apply();
+                    if (!t.equals(saved)) {
+                        GitHub.resetLimit();
+                        if (!t.isEmpty()) testToken(t);
+                    }
                     refresh();
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
+    }
+
+    /** Tells the user whether GitHub accepts the new token and what limit it gets. */
+    private void testToken(String t) {
+        new Thread(() -> {
+            String msg;
+            try {
+                msg = "Token works: " + GitHub.tokenLimit(t) + " checks per hour";
+            } catch (GitHub.HttpError ex) {
+                msg = ex.code == 401 ? "GitHub does not accept this token" : "Token test: " + ex.getMessage();
+            } catch (java.io.IOException ex) {
+                msg = "Could not test the token: " + ex.getMessage();
+            }
+            String m = msg;
+            runOnUiThread(() -> Toast.makeText(this, m, Toast.LENGTH_LONG).show());
+        }).start();
     }
 
     @Override
