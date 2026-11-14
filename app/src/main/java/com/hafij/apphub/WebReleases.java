@@ -50,7 +50,8 @@ final class WebReleases {
     }
 
     /**
-     * Releases newest first, up to the first one that has an APK for this device. Releases
+     * Releases in feed order; assets are fetched for each stable one whose version beats the
+     * best APK release seen so far (the feed is not strictly by version). Releases
      * newer than /releases/latest are pre-releases; the feed does not mark older ones, so they
      * are taken as stable. Assets are only fetched for releases Updates would look at. Throws
      * when none of the feed's releases has a usable APK.
@@ -59,6 +60,7 @@ final class WebReleases {
         List<Entry> entries = feed(repo);
         String latest = includePre ? null : latestTagPath(repo);
         boolean stable = false, found = false;
+        String bestVersion = null;
         JSONArray out = new JSONArray();
         try {
             for (Entry en : entries) {
@@ -73,6 +75,9 @@ final class WebReleases {
                 r.put("prerelease", pre);
                 out.put(r);
                 if (pre) continue;
+                // Only a higher version than the best APK so far can change Updates' pick.
+                String v = Versions.fromTag(en.tag);
+                if (bestVersion != null && !Versions.newer(v, bestVersion)) continue;
                 AppEntry.Release rel = assets(repo, en);
                 JSONArray arr = new JSONArray();
                 for (AppEntry.Asset a : rel.assets) {
@@ -84,7 +89,7 @@ final class WebReleases {
                 r.put("assets", arr);
                 if (Updates.bestApk(rel) != null) {
                     found = true;
-                    break;
+                    bestVersion = v;
                 }
             }
         } catch (JSONException e) {

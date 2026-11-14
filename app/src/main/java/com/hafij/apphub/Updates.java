@@ -83,12 +83,15 @@ final class Updates {
             }
             AppEntry.Asset best = bestApk(rel);
             if (best == null) continue;
+            // GitHub's list is not strictly newest first (a repo with desktop and Android tags
+            // can list an older APK release above a newer one), so keep the highest version.
+            if (e.release != null && !Versions.newer(rel.version, e.release.version)) continue;
             e.release = rel;
             e.asset = best;
+            e.sums = null;
             for (AppEntry.Asset a : rel.assets) {
                 if (a.name.toUpperCase(Locale.ROOT).startsWith("SHA256SUMS")) e.sums = a;
             }
-            return;
         }
     }
 
