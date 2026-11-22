@@ -122,6 +122,10 @@ final class InstallQueue {
             if (e.pkg != null && !e.pkg.equals(info.packageName)) {
                 throw new IOException("APK is " + info.packageName + ", expected " + e.pkg);
             }
+            String keyErr = signerMismatch(c, info.packageName, apk);
+            if (keyErr != null) throw new IOException(keyErr);
+            String pinErr = Pins.check(info.packageName, archiveCerts(c, apk));
+            if (pinErr != null) throw new IOException(pinErr);
             if (e.pkg == null) {
                 e.pkg = info.packageName;
                 if (e.custom) Catalog.saveCustom(c, Catalog.loadWith(c, e));
@@ -136,8 +140,11 @@ final class InstallQueue {
                 changed();
                 err = install(c, e, apk, false);
             }
-        } catch (IOException ex) {
-            err = ex.getMessage() == null ? ex.toString() : ex.getMessage();
+        } catch (IOException | RuntimeException ex) {
+            // RuntimeException: createSession/getPackageArchiveInfo can throw SecurityException,
+            // IllegalStateException etc.; without this the row stays on "Installing…" forever.
+            String m = ex.getMessage();
+            err = m == null || m.isEmpty() ? ex.toString() : m;
         } finally {
             apk.delete();
         }
@@ -201,6 +208,79 @@ final class InstallQueue {
         if (want == null) return;
         String got = sha256(apk);
         if (!want.equals(got)) throw new IOException("Checksum mismatch; download is corrupt");
+    }
+
+    /**
+     * For an update of an installed app: an error when the downloaded APK shares no signing
+     * certificate (current or rotation history) with the installed one. Android would refuse such an
+     * update anyway; this only says so before the session. Returns null (no opinion) whenever
+     * anything is unknown: not installed, Android &lt; 9, no signing info.
+     */
+    static String signerMismatch(Context c, String pkg, File apk) {
+        if (Build.VERSION.SDK_INT < 28 || pkg == null) return null;
+        try {
+            android.content.pm.PackageManager pm = c.getPackageManager();
+            int flags = android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES;
+            PackageInfo installed;
+            try {
+                installed = pm.getPackageInfo(pkg, flags);
+            } catch (android.content.pm.PackageManager.NameNotFoundException ex) {
+                return null;
+            }
+            PackageInfo archive = pm.getPackageArchiveInfo(apk.getPath(), flags);
+            java.util.Set<String> have = certs(installed), got = certs(archive);
+            if (have.isEmpty() || got.isEmpty()) return null;
+            for (String h : have) if (got.contains(h)) return null;
+            return "Signed with a different key than the installed app; uninstall it first";
+        } catch (RuntimeException ex) {
+            return null;
+        }
+    }
+
+    /**
+     * DER bytes of the downloaded APK's signing certificates, including its rotation history.
+     * Empty when they cannot be read.
+     */
+    @SuppressWarnings("deprecation")
+    static java.util.List<byte[]> archiveCerts(Context c, File apk) {
+        java.util.List<byte[]> out = new java.util.ArrayList<>();
+        try {
+            android.content.pm.PackageManager pm = c.getPackageManager();
+            if (Build.VERSION.SDK_INT >= 28) {
+                PackageInfo info = pm.getPackageArchiveInfo(apk.getPath(),
+                        android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES);
+                if (info == null || info.signingInfo == null) return out;
+                android.content.pm.SigningInfo si = info.signingInfo;
+                android.content.pm.Signature[] cur = si.getApkContentsSigners();
+                if (cur != null) for (android.content.pm.Signature sg : cur) out.add(sg.toByteArray());
+                if (!si.hasMultipleSigners()) {
+                    android.content.pm.Signature[] hist = si.getSigningCertificateHistory();
+                    if (hist != null) for (android.content.pm.Signature sg : hist) out.add(sg.toByteArray());
+                }
+            } else {
+                PackageInfo info = pm.getPackageArchiveInfo(apk.getPath(),
+                        android.content.pm.PackageManager.GET_SIGNATURES);
+                if (info != null && info.signatures != null) {
+                    for (android.content.pm.Signature sg : info.signatures) out.add(sg.toByteArray());
+                }
+            }
+        } catch (RuntimeException ignored) {
+            // Unreadable: Pins.check refuses pinned apps and ignores the rest.
+        }
+        return out;
+    }
+
+    private static java.util.Set<String> certs(PackageInfo info) {
+        java.util.Set<String> out = new java.util.HashSet<>();
+        if (info == null || Build.VERSION.SDK_INT < 28 || info.signingInfo == null) return out;
+        android.content.pm.SigningInfo si = info.signingInfo;
+        android.content.pm.Signature[] cur = si.getApkContentsSigners();
+        if (cur != null) for (android.content.pm.Signature sg : cur) out.add(sg.toCharsString());
+        if (!si.hasMultipleSigners()) {
+            android.content.pm.Signature[] hist = si.getSigningCertificateHistory();
+            if (hist != null) for (android.content.pm.Signature sg : hist) out.add(sg.toCharsString());
+        }
+        return out;
     }
 
     static String sha256(File f) throws IOException {

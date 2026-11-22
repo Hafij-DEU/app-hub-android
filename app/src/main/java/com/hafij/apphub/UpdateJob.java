@@ -46,10 +46,14 @@ public final class UpdateJob extends JobService {
         List<AppEntry> apps = Catalog.load(c);
         Updates.checkAll(c, apps);
         List<AppEntry> pending = new ArrayList<>();
+        // Installed version unknown ("?" or no digits): can't tell whether the release is really
+        // newer, so only notify; the user can still update by hand.
+        List<AppEntry> manual = new ArrayList<>();
         AppEntry self = null;
         for (AppEntry e : apps) {
             if (!e.hasUpdate()) continue;
-            if (e.self) self = e;
+            if (!Versions.known(e.installedVersion)) manual.add(e);
+            else if (e.self) self = e;
             else pending.add(e);
         }
         if (self != null) pending.add(self); // last: updating App Hub ends this process
@@ -58,7 +62,9 @@ public final class UpdateJob extends JobService {
         boolean auto = Settings.autoInstall(c) && Build.VERSION.SDK_INT >= 31
                 && cm != null && !cm.isActiveNetworkMetered();
         if (!auto || pending.isEmpty()) {
-            Notify.updates(c, pending);
+            List<AppEntry> all = new ArrayList<>(pending);
+            all.addAll(manual);
+            Notify.updates(c, all);
             return;
         }
         List<String> done = new ArrayList<>(), failed = new ArrayList<>();
@@ -75,6 +81,12 @@ public final class UpdateJob extends JobService {
         if (!failed.isEmpty()) {
             if (text.length() > 0) text.append("\n");
             text.append(String.join("\n", failed));
+        }
+        if (!manual.isEmpty()) {
+            List<String> names = new ArrayList<>();
+            for (AppEntry e : manual) names.add(e.name);
+            if (text.length() > 0) text.append("\n");
+            text.append("Update by hand: ").append(String.join(", ", names));
         }
         Notify.result(c, failed.isEmpty() ? "Apps updated" : "Some updates need attention", text.toString());
     }
